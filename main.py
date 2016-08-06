@@ -11,31 +11,23 @@ import time
 
 import gMusicLogin
 
+# Raspi Input Setup
+# ==============================================================
 #import Rpi.GPIO as GPIO
 
 #GPIO.setmode( GPIO.BCM )
 #GPIO.setup( 23 , GPIO.IN , pull_up_down=GPIO.PUD_UP )
 #GPIO.setup( 24 , GPIO.IN , pull_up_down=GPIO.PUD_DOWN )
 
-
-api = Mobileclient()
-api.login( gMusicLogin.getUser() , gMusicLogin.getPass() , Mobileclient.FROM_MAC_ADDRESS )
+# ==============================================================
 
 
-# USER DATA 
-# ==================
-nowPlaying = None
 
-playlists = {}
-playlists['EDM'] = []
-playlists['Relaxing'] = {}
-
-playlists['EDM'].append('4b40425b-2e11-388f-aeed-ea736b88662c')
-
-workingPLAYLISTSongIDs = []
-# ==================
-
+# {tracking} - functions
+# ==============================================================
 '''
+#allStations = api.get_all_stations()
+
 #print all local saved playlists
 for x in playlists:
 	i = 0
@@ -43,25 +35,12 @@ for x in playlists:
 		print(playlists[x][i])
 		i = i + 1;
 '''
+# ==============================================================
 
 
-'''
-allStations = api.get_all_stations()
-for x in allStations:
-	print(x)
-'''
 
-
-workingPlaylist = api.get_station_tracks( playlists['EDM'][0] , 1000 )
-for x in workingPlaylist:
-	print(x['artist'] + " |=| " + x['title'])
-	workingPLAYLISTSongIDs.append(x['nid'])
-
-pI = 0
-workingPlaylistLEN = len(workingPLAYLISTSongIDs)
-print("Filled workingPlaylist with " + str(workingPlaylistLEN) + " songs" )
-
-
+# Utility Functions
+# ==============================================================
 class NonBlockingConsole(object):
     def __enter__(self):
         self.old_settings = termios.tcgetattr(sys.stdin)
@@ -79,6 +58,43 @@ class NonBlockingConsole(object):
             return '[CTRL-C]'
         return False
 
+# ==============================================================
+
+
+
+
+# USER DATA 
+# ==============================================================
+
+playlists = {}
+playlists['EDM'] = []
+playlists['Relaxing'] = {}
+
+playlists['EDM'].append('4b40425b-2e11-388f-aeed-ea736b88662c')
+
+
+nowPlaying = None
+workingPlaylist = None
+workingPLAYLISTSongIDs = []
+# ==============================================================
+
+
+api = Mobileclient()
+api.login( gMusicLogin.getUser() , gMusicLogin.getPass() , Mobileclient.FROM_MAC_ADDRESS )
+
+
+
+workingPlaylist = api.get_station_tracks( playlists['EDM'][0] , 1000 )
+for x in workingPlaylist:
+	print(x['artist'] + " |=| " + x['title'])
+	workingPLAYLISTSongIDs.append(x['nid'])
+
+
+workingPlaylistLEN = len(workingPLAYLISTSongIDs)
+print("Filled workingPlaylist with " + str(workingPlaylistLEN) + " songs" )
+
+
+
 
 class RaspiInputHandler(object):
 
@@ -93,14 +109,6 @@ class RaspiInputHandler(object):
 		self.playing = True
 		self.__thread.join()
 		self.playing = False
-
-		print("possibly start next song?")
-		'''
-		self.nowPlaying.startPlayerPROC(urlTest2)
-		self.__thread = threading.Thread( target = self.readButtonStateHelperTest , args=() )
-		self.__thread.start()
-		self.__thread.join()
-		'''
 		
 
 	def readMPlayerOutput(self):
@@ -253,7 +261,7 @@ class mplayerHandler:
 
 
 
-
+pI = 0
 while pI < workingPlaylistLEN:
 	wURL = api.get_stream_url( workingPLAYLISTSongIDs[pI] , api.android_id , 'hi' )
 	nowPlaying = mplayerHandler();
