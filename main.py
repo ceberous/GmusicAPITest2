@@ -8,30 +8,11 @@ from GMusicLocalManager import LocalGManager
 import os
 import threading
 import pickle
-from pygame import mixer
 import time
-
-
-# {tracking} - functions
-# ==============================================================
-'''
-#allStations = api.get_all_stations()
-
-#print all local saved playlists
-for x in playlists:
-	i = 0
-	while i < len(playlists[x]):
-		print(playlists[x][i])
-		i = i + 1;
-'''
-# ==============================================================
-
 
 
 # USER DATA 
 # ==============================================================
-mixer.pre_init(44100, -16, 2, 2048)
-
 homeDIR = os.path.expanduser("~") 
 libDIR = homeDIR + "/GMusicLocalLibrary/"
 
@@ -42,6 +23,8 @@ except:
 	localLibrary = {}
 	localLibrary['EDM'] = {}
 	localLibrary['Relaxing'] = {}
+
+print( "LocalLibary Size = " + str( len( localLibrary['EDM'] ) ) )
 
 try:
 	playlists = pickle.load( open( libDIR + "libPlaylists.p" , "rb" ) )
@@ -55,27 +38,15 @@ except:
 
 
 nowPlaying = False
-
 workingPlaylist = None
-
-workingPlaylistOBJ = {}
-workingPlaylistOBJ['playistGenre'] 	= ""
-workingPlaylistOBJ['playlistName'] 	= ""
-workingPlaylistOBJ['playlistID'] 	= ""
-workingPlaylistOBJ['songIDS'] 	 	= []
-workingPlaylistOBJ['trackName']  	= []
-workingPlaylistOBJ['artistName'] 	= []
-workingPlaylistOBJ['albumID'] 	 	= []
-workingPlaylistOBJ['artURL'] 	 	= []
 # ==============================================================
 
 
-
-# 1.) Login
+# 1.) Login / Initialize
 #--------#
 api = Mobileclient()
 api.login( gMusicLogin.getUser() , gMusicLogin.getPass() , Mobileclient.FROM_MAC_ADDRESS )
-
+lManager = LocalGManager()
 
 # 2.) Grab Example Playlist 
 #------------------------#
@@ -84,30 +55,13 @@ workingPlaylist = api.get_station_tracks( playlists['EDM'][0] , 1000 )
 
 # 3.) Store Results in workingLibraryOBJ
 #--------------------------------------#
-workingPlaylistOBJ['playlistGenre'] = workingPlaylist[0]['genre']
-for x in workingPlaylist:
-
-	workingPlaylistOBJ['songIDS'].append( x['nid'] )
-	workingPlaylistOBJ['trackName'].append( x['title'] )
-	workingPlaylistOBJ['artistName'].append( x['artist'] )
-	workingPlaylistOBJ['albumID'].append( x['albumId'] )
-	workingPlaylistOBJ['artURL'].append( x['albumArtRef'][0]['url'] )
-
-
-# DEBUG INFO
-print( "LocalLibary Size = " + str( len( localLibrary['EDM'] ) ) )
-workingPlaylistLEN = len(workingPlaylistOBJ['trackName'])
-print("Filled workingPlaylist with " + str(workingPlaylistLEN) + " songs" )
-# DEBUG INFO
-
+workingPlaylistOBJ = lManager.analyzePlaylist(workingPlaylist)
 
 
 # 4.) Check Library for local copy , download if necessary
 # ----------------------------------------------------------#
-lManager = LocalGManager()
-
 A2 = 0
-while A2 < workingPlaylistLEN:
+while A2 < len(workingPlaylistOBJ['songIDS']):
 	
 	if workingPlaylistOBJ['songIDS'][A2] in localLibrary['EDM']:
 		print( workingPlaylistOBJ['trackName'][A2] + " already exists in library" )
@@ -128,6 +82,7 @@ while A2 < workingPlaylistLEN:
 	A2 = A2 + 1
 
 
+# [emulation] waiting on the raspi main input loop
 p1.join()
 
 

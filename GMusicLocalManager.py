@@ -9,7 +9,6 @@ class LocalGManager:
 
 	def __init__(self):
 
-		self.a = None
 		mixer.pre_init(44100, -16, 2, 2048)
 
 	def download( self , directoryPATH , fileName , wURL ):
@@ -35,5 +34,34 @@ class LocalGManager:
 		while mixer.music.get_busy() == True:
 			continue
 
+
+	def analyzePlaylist( self , workingPlaylist ):
+
+		workingPlaylistOBJ = {}
+		workingPlaylistOBJ['playistGenre'] 	= ""
+		workingPlaylistOBJ['playlistName'] 	= ""
+		workingPlaylistOBJ['playlistID'] 	= ""
+		workingPlaylistOBJ['songIDS'] 	 	= []
+		workingPlaylistOBJ['trackName']  	= []
+		workingPlaylistOBJ['artistName'] 	= []
+		workingPlaylistOBJ['albumID'] 	 	= []
+		workingPlaylistOBJ['artURL'] 	 	= []	
+
+		workingPlaylistOBJ['playlistGenre'] = workingPlaylist[0]['genre']
+		for x in workingPlaylist:
+
+			workingPlaylistOBJ['songIDS'].append( x['nid'] )
+			workingPlaylistOBJ['trackName'].append( x['title'] )
+			workingPlaylistOBJ['artistName'].append( x['artist'] )
+			workingPlaylistOBJ['albumID'].append( x['albumId'] )
+			workingPlaylistOBJ['artURL'].append( x['albumArtRef'][0]['url'] )
+
+
+		# DEBUG INFO
+		workingPlaylistLEN = len(workingPlaylistOBJ['trackName'])
+		print("Filled workingPlaylist with " + str(workingPlaylistLEN) + " songs" )
+		# DEBUG INFO
+
+		return workingPlaylistOBJ
 
 
