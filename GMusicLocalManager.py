@@ -3,6 +3,7 @@ import requests
 
 import os
 
+
 class LocalGManager:
 
 	def __init__(self):

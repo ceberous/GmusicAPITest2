@@ -7,6 +7,9 @@ from GMusicLocalManager import LocalGManager
 
 import os
 import pickle
+from pygame import mixer
+import time
+
 
 # {tracking} - functions
 # ==============================================================
@@ -26,6 +29,8 @@ for x in playlists:
 
 # USER DATA 
 # ==============================================================
+mixer.pre_init(44100, -16, 2, 2048)
+
 homeDIR = os.path.expanduser("~") 
 libDIR = homeDIR + "/GMusicLocalLibrary/"
 
@@ -46,6 +51,9 @@ except:
 	playlists['Relaxing'] = []
 	playlists['EDM'].append('4b40425b-2e11-388f-aeed-ea736b88662c')
 	pickle.dump( playlists , open( libDIR + "libPlaylists.p" , "wb" ) )
+
+
+nowPlaying = False
 
 workingPlaylist = None
 
@@ -102,11 +110,19 @@ A2 = 0
 while A2 < workingPlaylistLEN:
 	
 	if workingPlaylistOBJ['songIDS'][A2] in localLibrary['EDM']:
-			print( workingPlaylistOBJ['trackName'][A2] + " already exists in library" )
+		#print( workingPlaylistOBJ['trackName'][A2] + " already exists in library" )
+		if nowPlaying == False:
+			#start playing 1st song
+			fName = os.path.join( libDIR , "EDM" , workingPlaylistOBJ['songIDS'][A2] + ".mp3" )
+			mixer.init()
+			mixer.music.load(fName)
+			mixer.music.play()
+			print( "\n[now playing - \"" + workingPlaylistOBJ['songIDS'][A2] +".mp3\"]" +" = " + workingPlaylistOBJ['trackName'][A2] + " - " + workingPlaylistOBJ['artistName'][A2] + "\n" )
+			nowPlaying = True
+
 	else:
 
 		wURL = api.get_stream_url( workingPlaylistOBJ['songIDS'][A2] , api.android_id , 'hi' )
-		
 		lManager.download( libDIR + "/EDM" , workingPlaylistOBJ['songIDS'][A2] + ".mp3" , wURL )
 
 		localLibrary['EDM'][workingPlaylistOBJ['songIDS'][A2]] = workingPlaylistOBJ
@@ -114,6 +130,9 @@ while A2 < workingPlaylistLEN:
 
 	A2 = A2 + 1
 
+
+while mixer.music.get_busy() == True:
+	continue
 
 #Resave Database
 pickle.dump( localLibrary , open( libDIR + "libDatabase.p" , "wb" ) )

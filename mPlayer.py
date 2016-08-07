@@ -1,15 +1,21 @@
 import os
 import subprocess
 
+
 class mplayerHandler:
 
 	def __init__(self):
 		self.PlayerPROC = None
 		
-	def startPlayerPROC( self , url):
+	def startPlayerPROC( self ):
+		#print(url)
+		wURL1 = "/home/morpheous/GMusicLocalLibrary/EDM/Thwn63mdzx6afensr2trifx2vky.mp3" 
+		self.PlayerPROC = subprocess.Popen( [ "/usr/bin/mplayer" , wURL1 ] , stdin=subprocess.PIPE , stdout=subprocess.PIPE , stderr=subprocess.PIPE )
+		'''
 		with open( os.devnull , 'w' ) as temp:
 			self.PlayerPROC = subprocess.Popen( [ "/usr/bin/mplayer" , url ] , stdin=subprocess.PIPE , stdout=subprocess.PIPE , stderr=temp )
 		#self.PlayerPROC.stdout.close()
+		'''
 		print( "Started mplayer. PID = " + str(self.PlayerPROC.pid) )	
 
 	def killPlayerPROC( self ):
