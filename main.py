@@ -1,24 +1,12 @@
 from gmusicapi import Mobileclient
 
-from tqdm import tqdm
-import requests
-
 import gMusicLogin
 from Raspi import RaspiInputHandler
 from mPlayer import mplayerHandler
+from GMusicLocalManager import LocalGManager
 
-
-# Raspi Input Setup
-# ==============================================================
-#import Rpi.GPIO as GPIO
-
-#GPIO.setmode( GPIO.BCM )
-#GPIO.setup( 23 , GPIO.IN , pull_up_down=GPIO.PUD_UP )
-#GPIO.setup( 24 , GPIO.IN , pull_up_down=GPIO.PUD_DOWN )
-
-# ==============================================================
-
-
+import os
+import pickle
 
 # {tracking} - functions
 # ==============================================================
@@ -38,62 +26,95 @@ for x in playlists:
 
 # USER DATA 
 # ==============================================================
+homeDIR = os.path.expanduser("~") 
+libDIR = homeDIR + "/GMusicLocalLibrary/"
 
-HALF_MB = 524288  # in bytes
-MP3_TYPE = 'audio/mpeg'
+try:
+	localLibrary = pickle.load( open( libDIR + "libDatabase.p" , "rb" ) )
+except:
+	print("Recreating Library Save File")
+	localLibrary = {}
+	localLibrary['EDM'] = {}
+	localLibrary['Relaxing'] = {}
 
-playlists = {}
-playlists['EDM'] = []
-playlists['Relaxing'] = {}
+try:
+	playlists = pickle.load( open( libDIR + "libPlaylists.p" , "rb" ) )
+except:
+	print("Recreating Playlists Save File")
+	playlists = {}
+	playlists['EDM'] = []
+	playlists['Relaxing'] = []
+	playlists['EDM'].append('4b40425b-2e11-388f-aeed-ea736b88662c')
+	pickle.dump( playlists , open( libDIR + "libPlaylists.p" , "wb" ) )
 
-playlists['EDM'].append('4b40425b-2e11-388f-aeed-ea736b88662c')
-
-
-nowPlaying = None
 workingPlaylist = None
-workingPLAYLISTSongIDs = []
+
+workingPlaylistOBJ = {}
+workingPlaylistOBJ['playistGenre'] 	= ""
+workingPlaylistOBJ['playlistName'] 	= ""
+workingPlaylistOBJ['playlistID'] 	= ""
+workingPlaylistOBJ['songIDS'] 	 	= []
+workingPlaylistOBJ['trackName']  	= []
+workingPlaylistOBJ['artistName'] 	= []
+workingPlaylistOBJ['albumID'] 	 	= []
+workingPlaylistOBJ['artURL'] 	 	= []
 # ==============================================================
 
 
+
+# 1.) Login
+#--------#
 api = Mobileclient()
 api.login( gMusicLogin.getUser() , gMusicLogin.getPass() , Mobileclient.FROM_MAC_ADDRESS )
 
 
-
+# 2.) Grab Example Playlist 
+#------------------------#
 workingPlaylist = api.get_station_tracks( playlists['EDM'][0] , 1000 )
+
+
+# 3.) Store Results in workingLibraryOBJ
+#--------------------------------------#
+workingPlaylistOBJ['playlistGenre'] = workingPlaylist[0]['genre']
 for x in workingPlaylist:
-	print(x['artist'] + " |=| " + x['title'] + " |=| " + x['nid'])
-	workingPLAYLISTSongIDs.append(x['nid'])
+
+	workingPlaylistOBJ['songIDS'].append( x['nid'] )
+	workingPlaylistOBJ['trackName'].append( x['title'] )
+	workingPlaylistOBJ['artistName'].append( x['artist'] )
+	workingPlaylistOBJ['albumID'].append( x['albumId'] )
+	workingPlaylistOBJ['artURL'].append( x['albumArtRef'][0]['url'] )
 
 
-workingPlaylistLEN = len(workingPLAYLISTSongIDs)
+# DEBUG INFO
+print( "LocalLibary Size = " + str( len( localLibrary['EDM'] ) ) )
+workingPlaylistLEN = len(workingPlaylistOBJ['trackName'])
 print("Filled workingPlaylist with " + str(workingPlaylistLEN) + " songs" )
+# DEBUG INFO
 
 
 
 
-'''
-pI = 0
-tmp_Downloader = Downloader()
-while pI < workingPlaylistLEN:
+# 4.) Check Library for local copy , download if necessary
+# ----------------------------------------------------------#
+lManager = LocalGManager()
+
+A2 = 0
+while A2 < workingPlaylistLEN:
 	
-	wURL = api.get_stream_url( workingPLAYLISTSongIDs[pI] , api.android_id , 'hi' )
+	if workingPlaylistOBJ['songIDS'][A2] in localLibrary['EDM']:
+			print( workingPlaylistOBJ['trackName'][A2] + " already exists in library" )
+	else:
 
-	nowPlaying = mplayerHandler();
-	nowPlaying.startPlayerPROC(mp3Test)
-	inputHandler = RaspiInputHandler(nowPlaying)
-	
-	#tmp_Downloader.download( wURL )
+		wURL = api.get_stream_url( workingPlaylistOBJ['songIDS'][A2] , api.android_id , 'hi' )
+		
+		lManager.download( libDIR + "/EDM" , workingPlaylistOBJ['songIDS'][A2] + ".mp3" , wURL )
 
-	print("done with song")
-	pI = pI + 1
+		localLibrary['EDM'][workingPlaylistOBJ['songIDS'][A2]] = workingPlaylistOBJ
+		print( "loaded " + workingPlaylistOBJ['songIDS'][A2] + " into localLibrary" )
 
-'''
+	A2 = A2 + 1
 
 
+#Resave Database
+pickle.dump( localLibrary , open( libDIR + "libDatabase.p" , "wb" ) )
 
-wURL = api.get_stream_url( workingPLAYLISTSongIDs[0] , api.android_id , 'hi' )
-response1 = requests.get( wURL , stream=True )
-with open( "2.mp3" , 'wb' ) as f:
-	for data in tqdm( response1.iter_content(chunk_size=HALF_MB) ):
-		f.write(data)
