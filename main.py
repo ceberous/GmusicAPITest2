@@ -6,6 +6,7 @@ from mPlayer import mplayerHandler
 from GMusicLocalManager import LocalGManager
 
 import os
+import threading
 import pickle
 from pygame import mixer
 import time
@@ -101,7 +102,6 @@ print("Filled workingPlaylist with " + str(workingPlaylistLEN) + " songs" )
 
 
 
-
 # 4.) Check Library for local copy , download if necessary
 # ----------------------------------------------------------#
 lManager = LocalGManager()
@@ -110,29 +110,26 @@ A2 = 0
 while A2 < workingPlaylistLEN:
 	
 	if workingPlaylistOBJ['songIDS'][A2] in localLibrary['EDM']:
-		#print( workingPlaylistOBJ['trackName'][A2] + " already exists in library" )
-		if nowPlaying == False:
-			#start playing 1st song
-			fName = os.path.join( libDIR , "EDM" , workingPlaylistOBJ['songIDS'][A2] + ".mp3" )
-			mixer.init()
-			mixer.music.load(fName)
-			mixer.music.play()
-			print( "\n[now playing - \"" + workingPlaylistOBJ['songIDS'][A2] +".mp3\"]" +" = " + workingPlaylistOBJ['trackName'][A2] + " - " + workingPlaylistOBJ['artistName'][A2] + "\n" )
-			nowPlaying = True
-
+		print( workingPlaylistOBJ['trackName'][A2] + " already exists in library" )
 	else:
-
 		wURL = api.get_stream_url( workingPlaylistOBJ['songIDS'][A2] , api.android_id , 'hi' )
 		lManager.download( libDIR + "/EDM" , workingPlaylistOBJ['songIDS'][A2] + ".mp3" , wURL )
-
 		localLibrary['EDM'][workingPlaylistOBJ['songIDS'][A2]] = workingPlaylistOBJ
 		print( "loaded " + workingPlaylistOBJ['songIDS'][A2] + " into localLibrary" )
+
+	#start playing 1st song
+	if nowPlaying == False:
+		fName = os.path.join( libDIR , "EDM" , workingPlaylistOBJ['songIDS'][A2] + ".mp3" )
+		p1 = threading.Thread( target=lManager.playLocalSong , args=(fName,) , kwargs=None )
+		p1.start()
+		print( "\n[now playing - \"" + workingPlaylistOBJ['songIDS'][A2] +".mp3\"]" +" = " + workingPlaylistOBJ['trackName'][A2] + " - " + workingPlaylistOBJ['artistName'][A2] + "\n" )
+		nowPlaying = True
 
 	A2 = A2 + 1
 
 
-while mixer.music.get_busy() == True:
-	continue
+p1.join()
+
 
 #Resave Database
 pickle.dump( localLibrary , open( libDIR + "libDatabase.p" , "wb" ) )
