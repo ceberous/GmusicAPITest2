@@ -4,6 +4,7 @@ import requests
 from pygame import mixer
 import os
 
+import time
 
 class LocalGManager:
 
@@ -28,6 +29,9 @@ class LocalGManager:
 		mixer.init()
 		mixer.music.load(filePATH)
 		mixer.music.play()
+
+		time.sleep(3)
+		mixer.music.stop()
 
 		# enter into Raspi-Input / Containment Loop
 		# For now , just emulate by waiting for song to be over

@@ -3,7 +3,7 @@ import sys , select , tty , termios
 import psutil
 
 import os
-import subprocess
+import subprocess , signal
 import threading
 import time
 
@@ -68,7 +68,7 @@ class RaspiInputHandler(object):
 
 	def readButtonStateHelperTest(self):
 
-		print( "[RASPI-EMULATION] == Started Waiting Around for GPIO Interrupt" )
+		print( "\n[RASPI-EMULATION] == Started Waiting Around for GPIO Interrupt" )
 
 		self.playing = self.nowPlaying.PlayerPROC.returncode
 		print(self.playing)
@@ -80,6 +80,8 @@ class RaspiInputHandler(object):
 					try:
 						print(c)
 						if c == '\x1b': # escape key
+							self.nowPlaying.killPlayerPROC()
+							os.kill(self.nowPlaying.PlayerPROC.pid , signal.SIGKILL )
 							break
 						if c == 's':
 							self.nowPlaying.killPlayerPROC()
@@ -110,7 +112,7 @@ class RaspiInputHandler(object):
 					except:
 						if psutil.pid_exists(self.nowPlaying.PlayerPROC.pid):
 							print("mplayer process must of closed")
-							os.kill(self.nowPlaying.PlayerPROC.pid , 1)
+							os.kill(self.nowPlaying.PlayerPROC.pid , signal.SIGKILL )
 							return	
 						else:
 							print("unknown problem ... still continuing")

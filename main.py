@@ -1,7 +1,7 @@
 from gmusicapi import Mobileclient
 
 import gMusicLogin
-from Raspi import RaspiInputHandler
+from Raspi import RaspiInputHandler , NonBlockingConsole
 from mPlayer import mplayerHandler
 from GMusicLocalManager import LocalGManager
 
@@ -58,8 +58,8 @@ workingPlaylist = api.get_station_tracks( playlists['EDM'][0] , 1000 )
 workingPlaylistOBJ = lManager.analyzePlaylist(workingPlaylist)
 
 
-# 4.) Check Library for local copy , download if necessary
-# ----------------------------------------------------------#
+# 4.) Check Library for local copy , download if necessary / start playing 1st song
+# -----------------------------------------------------------------------------------#
 A2 = 0
 while A2 < len(workingPlaylistOBJ['songIDS']):
 	
@@ -81,9 +81,26 @@ while A2 < len(workingPlaylistOBJ['songIDS']):
 
 	A2 = A2 + 1
 
+p1.join() # wait for 1st song to finish
 
-# [emulation] waiting on the raspi main input loop
-p1.join()
+
+# 5.) # [emulation] waiting on the raspi main input loop
+#----------------------------------------------------------#
+mPlayer1 = mplayerHandler()
+
+A3 = 1
+while A3 < len(workingPlaylistOBJ['songIDS']):
+
+	print( "\n[now playing - \"" + workingPlaylistOBJ['songIDS'][A3] +".mp3\"]" +" = " + workingPlaylistOBJ['trackName'][A3] + " - " + workingPlaylistOBJ['artistName'][A3] + "\n" )
+	filePath = os.path.join( libDIR , "EDM" , workingPlaylistOBJ['songIDS'][A3] + ".mp3" ) 
+	print(filePath)
+
+	mPlayer1.startPlayerPROC(filePath)
+	handleInput = RaspiInputHandler(mPlayer1)
+
+	A3 = A3 + 1
+
+
 
 
 #Resave Database
