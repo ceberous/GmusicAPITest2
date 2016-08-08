@@ -86,7 +86,7 @@ while A2 < len(workingPlaylistOBJ['songIDS']):
 p1.join() # wait for 1st song to finish
 
 
-# 5.) # [emulation] waiting on the raspi main input loop
+# 5.) # [emulation] waiting on the raspi main input loop / ( play rest of playlist que )
 #----------------------------------------------------------#
 A3 = 1
 while A3 < len(workingPlaylistOBJ['songIDS']):
@@ -95,7 +95,8 @@ while A3 < len(workingPlaylistOBJ['songIDS']):
 	filePath = os.path.join( libDIR , "EDM" , workingPlaylistOBJ['songIDS'][A3] + ".mp3" ) 
 	print(filePath)
 
-	p2 = threading.Thread( target=Mpg123Wrapper.launchMPG123Player , args=(filePath,) , kwargs=None )
+	#p2 = threading.Thread( target=Mpg123Wrapper.launchMPG123Player , args=(filePath,) , kwargs=None )
+	p2 = p1 = threading.Thread( target=lManager.playLocalSong , args=(filePath,) , kwargs=None )
 	p2.start()
 	p2.join()
 

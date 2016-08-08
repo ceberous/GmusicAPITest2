@@ -1,10 +1,32 @@
 from tqdm import tqdm
-import requests
+import requests , tty , sys , select , termios , psutil ,time 
 
 from pygame import mixer
 import os
 
 import time
+
+# Utility Functions
+# ==============================================================
+class NonBlockingConsole(object):
+    def __enter__(self):
+        self.old_settings = termios.tcgetattr(sys.stdin)
+        tty.setcbreak(sys.stdin.fileno())
+        return self
+
+    def __exit__(self, type, value, traceback):
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.old_settings)
+
+    def get_data(self):
+        try:
+            if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
+                return sys.stdin.read(1)
+        except:
+            return '[CTRL-C]'
+        return False
+
+# ==============================================================
+
 
 class LocalGManager:
 
@@ -30,15 +52,46 @@ class LocalGManager:
 		mixer.music.load(filePATH)
 		mixer.music.play()
 
-
-		time.sleep(3)
-		mixer.music.stop()
+		#time.sleep(3)
+		#mixer.music.stop()
 
 		# enter into Raspi-Input / Containment Loop
 		# For now , just emulate by waiting for song to be over
 		while mixer.music.get_busy() == True:
-			#time.sleep(3)
-			#print(mixer.music.get_pos())
+			with NonBlockingConsole() as nbc:
+				while True:
+					c = nbc.get_data()
+					if c:
+						try:
+							print(c)
+							if c == '\x1b': # escape key
+								#os.kill(nowPlaying.pid , signal.SIGKILL )
+								mixer.music.stop()
+								break
+							if c == 's':
+								nowPlaying.killPlayerPROC()
+								break
+							if c == 'v':
+								nowPlaying.toggleProgressBar()
+							if c == 'p':
+								nowPlaying.pause()
+							if c == '1':
+								nowPlaying.seek( "b" , 1 )
+							if c == '2':
+								nowPlaying.seek( "b" , 2 )
+							if c == '3':
+								nowPlaying.seek( "b" , 3 )
+							if c == '4':
+								nowPlaying.seek( "f" , 1 )
+							if c == '5':
+								nowPlaying.seek( "f" , 2 )
+							if c == '6':
+								nowPlaying.seek( "f" , 3 )
+
+						except:
+							print("mplayer process must of closed")
+							
+								
 			continue
 
 

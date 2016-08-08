@@ -1,5 +1,8 @@
 import os , subprocess , signal , select , tty , sys , termios , psutil ,time 
 
+homeDIR = os.path.expanduser("~") 
+libDIR = homeDIR + "/GMusicLocalLibrary/"
+
 # Utility Functions
 # ==============================================================
 class NonBlockingConsole(object):
@@ -21,9 +24,7 @@ class NonBlockingConsole(object):
 
 # ==============================================================
 
-def handleInput(mpg123PlayerPROC):
-
-	nowPlaying = mpg123PlayerPROC
+def handleInput(nowPlaying):
 
 	with NonBlockingConsole() as nbc:
 		while True:
@@ -63,12 +64,12 @@ def handleInput(mpg123PlayerPROC):
 					else:
 						print("unknown problem ... still continuing")
 						pass
-			time.sleep( .05 )
 
 
 def launchMPG123Player( filePATH ):
-
-	mPlayer = subprocess.Popen( [ "/usr/bin/mpg123" , filePATH ] , stdin=subprocess.PIPE , stdout=subprocess.PIPE , stderr=subprocess.PIPE )
+	dest = os.path.join( os.getcwd() , "mpg123OUT.txt"  )
+	mpg123OUT = open( dest , 'r+')
+	mPlayer = subprocess.Popen( [ "/usr/bin/mpg123" , filePATH ] , stdin=subprocess.PIPE , stdout=mpg123OUT , stderr=subprocess.PIPE )
 	print(mPlayer.pid)
 	handleInput(mPlayer)
 
