@@ -1,9 +1,11 @@
 from gmusicapi import Mobileclient
 
 import gMusicLogin
+import Mpg123Wrapper
 from Raspi import RaspiInputHandler , NonBlockingConsole
 from mPlayer import mplayerHandler
 from GMusicLocalManager import LocalGManager
+
 
 import os
 import threading
@@ -62,7 +64,7 @@ workingPlaylistOBJ = lManager.analyzePlaylist(workingPlaylist)
 # -----------------------------------------------------------------------------------#
 A2 = 0
 while A2 < len(workingPlaylistOBJ['songIDS']):
-	
+
 	if workingPlaylistOBJ['songIDS'][A2] in localLibrary['EDM']:
 		print( workingPlaylistOBJ['trackName'][A2] + " already exists in library" )
 	else:
@@ -86,20 +88,18 @@ p1.join() # wait for 1st song to finish
 
 # 5.) # [emulation] waiting on the raspi main input loop
 #----------------------------------------------------------#
-mPlayer1 = mplayerHandler()
-
 A3 = 1
 while A3 < len(workingPlaylistOBJ['songIDS']):
 
-	print( "\n[now playing - \"" + workingPlaylistOBJ['songIDS'][A3] +".mp3\"]" +" = " + workingPlaylistOBJ['trackName'][A3] + " - " + workingPlaylistOBJ['artistName'][A3] + "\n" )
+	print( "\n[now playing - \"" + workingPlaylistOBJ['songIDS'][A3] +".mp3\"]" +" = " + workingPlaylistOBJ['trackName'][A3] + " - " + workingPlaylistOBJ['artistName'][A3] )
 	filePath = os.path.join( libDIR , "EDM" , workingPlaylistOBJ['songIDS'][A3] + ".mp3" ) 
 	print(filePath)
 
-	mPlayer1.startPlayerPROC(filePath)
-	handleInput = RaspiInputHandler(mPlayer1)
+	p2 = threading.Thread( target=Mpg123Wrapper.launchMPG123Player , args=(filePath,) , kwargs=None )
+	p2.start()
+	p2.join()
 
 	A3 = A3 + 1
-
 
 
 

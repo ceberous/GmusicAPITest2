@@ -30,12 +30,15 @@ class LocalGManager:
 		mixer.music.load(filePATH)
 		mixer.music.play()
 
+
 		time.sleep(3)
 		mixer.music.stop()
 
 		# enter into Raspi-Input / Containment Loop
 		# For now , just emulate by waiting for song to be over
 		while mixer.music.get_busy() == True:
+			#time.sleep(3)
+			#print(mixer.music.get_pos())
 			continue
 
 
